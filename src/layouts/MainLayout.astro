@@ -1,0 +1,130 @@
+---
+import "../styles/global.css";
+interface Props {
+  namespace: string;
+}
+
+const { namespace } = Astro.props;
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={Astro.generator} />
+    <title>Astro</title>
+  </head>
+  <body data-barba="wrapper" class="relative">
+    <div
+      class="page-transition-container
+      flex
+      h-screen
+      w-full
+      z-10
+      absolute
+      top-0
+      left-0
+      pointer-events-none"
+    >
+      {
+        Array.from({ length: 10 }).map((index) => (
+          <div class="bar size-full scale-y-0 bg-blue-300" />
+        ))
+      }
+    </div>
+    <main data-barba="container" data-barba-namespace={namespace}>
+      <slot />
+    </main>
+  </body>
+</html>
+
+<script>
+  //@ts-ignore
+  import barba from "@barba/core";
+  import type { BarbaTransitionEvent } from "../interfaces/barba";
+  import gsap from "gsap";
+  import { SplitText } from "gsap/SplitText";
+  import { triggerHomeAnimations } from "../animations/home-animations";
+  import { handleAnimation } from "../animations/common";
+
+  gsap.registerPlugin([SplitText]);
+
+  barba.init({
+    debug: true,
+    transitions: [
+      {
+        name: "home-enter",
+        once(data: BarbaTransitionEvent) {
+          triggerHomeAnimations(data.next.container);
+        },
+        async leave(data: BarbaTransitionEvent) {
+          const bars = document.querySelectorAll(
+            ".page-transition-container > .bar"
+          );
+
+          console.log({ bars });
+
+          if (bars.length <= 0) {
+            throw new Error("No bars detected");
+          }
+          gsap.set(bars, { scaleY: 0, transformOrigin: "bottom left" });
+
+          // Animate in
+          const tl = gsap.timeline().to(bars, {
+            scaleY: 1,
+            stagger: 0.1,
+            duration: 0.2,
+            ease: "power4.inOut",
+          });
+
+          return tl;
+        },
+        async enter(data: BarbaTransitionEvent) {
+          gsap.set(data.current.container, { display: "none" });
+          const bars = document.querySelectorAll(
+            ".page-transition-container > .bar"
+          );
+
+          console.log({ bars });
+
+          if (bars.length <= 0) {
+            throw new Error("No bars detected");
+          }
+          gsap.set(bars, { scaleY: 1, transformOrigin: "top center" });
+
+          // Animate in
+          const tl = gsap.timeline().to(bars, {
+            scaleY: 0,
+            stagger: 0.1,
+            duration: 0.2,
+            ease: "power4.inOut",
+          });
+
+          return tl;
+        },
+      },
+    ],
+  });
+
+  /**
+ *  // Reset state before animation
+      gsap.set(bars, { scaleY: 0, transformOrigin: "bottom left" });
+
+      // Animate in
+      gsap
+        .timeline()
+        .to(bars, {
+          scaleY: 1,
+          stagger: 0.1,
+          duration: 0.2,
+          ease: "power4.inOut",
+        })
+        .to(bars, {
+          scaleY: 0,
+          stagger: 0.1,
+          duration: 0.2,
+          ease: "power4.inOut",
+        });
+ */
+</script>
