@@ -29,7 +29,7 @@ const { namespace } = Astro.props;
     >
       {
         Array.from({ length: 10 }).map((index) => (
-          <div class="bar size-full scale-y-0 bg-blue-300" />
+          <div class="bar size-full scale-y-0 bg-black" />
         ))
       }
     </div>
@@ -42,11 +42,14 @@ const { namespace } = Astro.props;
 <script>
   //@ts-ignore
   import barba from "@barba/core";
-  import type { BarbaTransitionEvent } from "../interfaces/barba";
   import gsap from "gsap";
   import { SplitText } from "gsap/SplitText";
-  import { triggerHomeAnimations } from "../animations/home-animations";
-  import { handleAnimation } from "../animations/common";
+  import { onceHomeAnimation } from "../animations/home-animations";
+  import { homeContentAnimations } from "../animations/home-animations";
+  import {
+    barsInAnimation,
+    barsOutAnimation,
+  } from "../animations/global.animations";
 
   gsap.registerPlugin([SplitText]);
 
@@ -54,77 +57,36 @@ const { namespace } = Astro.props;
     debug: true,
     transitions: [
       {
-        name: "home-enter",
-        once(data: BarbaTransitionEvent) {
-          triggerHomeAnimations(data.next.container);
+        name: "home",
+        to: { namespace: ["home"] },
+        async once({ next }) {
+          await onceHomeAnimation(next.container);
         },
-        async leave(data: BarbaTransitionEvent) {
-          const bars = document.querySelectorAll(
-            ".page-transition-container > .bar"
+        async enter({ next, current }) {
+          await barsOutAnimation().add(
+            homeContentAnimations(next.container),
+            "=-0.5"
           );
-
-          console.log({ bars });
-
-          if (bars.length <= 0) {
-            throw new Error("No bars detected");
-          }
-          gsap.set(bars, { scaleY: 0, transformOrigin: "bottom left" });
-
-          // Animate in
-          const tl = gsap.timeline().to(bars, {
-            scaleY: 1,
-            stagger: 0.1,
-            duration: 0.2,
-            ease: "power4.inOut",
-          });
-
-          return tl;
+          current.container.remove();
         },
-        async enter(data: BarbaTransitionEvent) {
-          gsap.set(data.current.container, { display: "none" });
-          const bars = document.querySelectorAll(
-            ".page-transition-container > .bar"
-          );
+        async leave({ current }) {
+          await barsInAnimation();
+          current.container.remove();
+        },
+      },
+      {
+        name: "about",
+        to: { namespace: ["about"] },
+        async enter({ current }) {
+          await barsOutAnimation();
+          current.container.remove();
+        },
 
-          console.log({ bars });
-
-          if (bars.length <= 0) {
-            throw new Error("No bars detected");
-          }
-          gsap.set(bars, { scaleY: 1, transformOrigin: "top center" });
-
-          // Animate in
-          const tl = gsap.timeline().to(bars, {
-            scaleY: 0,
-            stagger: 0.1,
-            duration: 0.2,
-            ease: "power4.inOut",
-          });
-
-          return tl;
+        async leave({ current }) {
+          await barsInAnimation();
+          current.container.remove();
         },
       },
     ],
   });
-
-  /**
- *  // Reset state before animation
-      gsap.set(bars, { scaleY: 0, transformOrigin: "bottom left" });
-
-      // Animate in
-      gsap
-        .timeline()
-        .to(bars, {
-          scaleY: 1,
-          stagger: 0.1,
-          duration: 0.2,
-          ease: "power4.inOut",
-        })
-        .to(bars, {
-          scaleY: 0,
-          stagger: 0.1,
-          duration: 0.2,
-          ease: "power4.inOut",
-        });
- */
 </script>

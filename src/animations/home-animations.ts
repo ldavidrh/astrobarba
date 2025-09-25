@@ -1,13 +1,22 @@
 import gsap from "gsap";
 import { SplitText } from "gsap/SplitText";
-import type { Container2 } from "../interfaces/barba";
+import { barsOutAnimation } from "./global.animations";
 
-export function triggerHomeAnimations(container: HTMLElement) {
-  const split = new SplitText(".fade-in");
+export function onceHomeAnimation(container: HTMLElement) {
+  return barsOutAnimation().delay(1).add(homeContentAnimations(container));
+}
+
+export const homeContentAnimations = (next: HTMLElement) => {
+  const fadeIn = next.querySelector(".fade-in");
+  const split = new SplitText(fadeIn);
 
   gsap.set(split.lines, { overflow: "hidden" });
 
-  gsap
+  gsap.set(".cover-image", {
+    clipPath: "polygon(0 0, 100% 0, 100% 0%, 0 0%);",
+  });
+
+  const tl = gsap
     .timeline()
     .to(".cover-image", {
       clipPath: "polygon(0 0, 100% 0, 100% 100%, 0 100%)",
@@ -25,4 +34,6 @@ export function triggerHomeAnimations(container: HTMLElement) {
       },
       "-=.8"
     );
-}
+
+  return tl;
+};
